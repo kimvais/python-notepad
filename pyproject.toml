@@ -1,0 +1,20 @@
+[project]
+name = "python-notepad"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "anyio>=4.12.1",
+    "fire>=0.7.1",
+    "platformdirs>=4.5.1",
+    "rich>=14.3.2",
+]
+
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+module-name = "notepad._core"
+features = ["pyo3/extension-module"]
+python-source = "."
