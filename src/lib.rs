@@ -1,6 +1,70 @@
 use pyo3::prelude::*;
 use notepad_parser::NotepadTabStat;
 
+#[pyclass(eq, eq_int)]
+#[derive(PartialEq, Clone, Debug)]
+pub enum PyEncoding {
+    ANSI = 0x01,
+    UTF16LE = 0x02,
+    UTF16BE = 0x03,
+    UTF8BOM = 0x04,
+    UTF8 = 0x05,
+    UNKNOWN = 0x00,
+}
+
+#[pymethods]
+impl PyEncoding {
+    #[getter]
+    fn name(&self) -> &str {
+        match self {
+            PyEncoding::ANSI => "ANSI",
+            PyEncoding::UTF16LE => "UTF16LE",
+            PyEncoding::UTF16BE => "UTF16BE",
+            PyEncoding::UTF8BOM => "UTF8BOM",
+            PyEncoding::UTF8 => "UTF8",
+            PyEncoding::UNKNOWN => "UNKNOWN",
+        }
+    }
+
+    fn __repr__(&self) -> String {
+        format!("PyEncoding.{}", self.name())
+    }
+
+    fn __str__(&self) -> &str {
+        self.name()
+    }
+}
+
+#[pyclass(eq, eq_int)]
+#[derive(PartialEq, Clone, Debug)]
+pub enum PyCRType {
+    CRLF = 0x01,
+    CR = 0x02,
+    LF = 0x03,
+    UNKNOWN = 0x00,
+}
+
+#[pymethods]
+impl PyCRType {
+    #[getter]
+    fn name(&self) -> &str {
+        match self {
+            PyCRType::CRLF => "CRLF",
+            PyCRType::CR => "CR",
+            PyCRType::LF => "LF",
+            PyCRType::UNKNOWN => "UNKNOWN",
+        }
+    }
+
+    fn __repr__(&self) -> String {
+        format!("PyCRType.{}", self.name())
+    }
+
+    fn __str__(&self) -> &str {
+        self.name()
+    }
+}
+
 #[pyclass]
 pub struct PyTabState {
     #[pyo3(get)]
@@ -12,9 +76,9 @@ pub struct PyTabState {
     #[pyo3(get)]
     pub file_size: Option<u64>,
     #[pyo3(get)]
-    pub encoding: Option<String>,
+    pub encoding: Option<PyEncoding>,
     #[pyo3(get)]
-    pub cr_type: Option<String>,
+    pub cr_type: Option<PyCRType>,
     #[pyo3(get)]
     pub file_hash: Option<String>,
     #[pyo3(get)]
@@ -49,18 +113,18 @@ fn parse_bin(path: String) -> PyResult<PyTabState> {
                 path: state.path,
                 file_size: state.file_size,
                 encoding: state.encoding.map(|e| match e {
-                    notepad_parser::enums::Encoding::ANSI => "ANSI".to_string(),
-                    notepad_parser::enums::Encoding::UTF16LE => "UTF16LE".to_string(),
-                    notepad_parser::enums::Encoding::UTF16BE => "UTF16BE".to_string(),
-                    notepad_parser::enums::Encoding::UTF8BOM => "UTF8BOM".to_string(),
-                    notepad_parser::enums::Encoding::UTF8 => "UTF8".to_string(),
-                    notepad_parser::enums::Encoding::UNKNOWN(x) => format!("UNKNOWN({})", x),
+                    notepad_parser::enums::Encoding::ANSI => PyEncoding::ANSI,
+                    notepad_parser::enums::Encoding::UTF16LE => PyEncoding::UTF16LE,
+                    notepad_parser::enums::Encoding::UTF16BE => PyEncoding::UTF16BE,
+                    notepad_parser::enums::Encoding::UTF8BOM => PyEncoding::UTF8BOM,
+                    notepad_parser::enums::Encoding::UTF8 => PyEncoding::UTF8,
+                    notepad_parser::enums::Encoding::UNKNOWN(_) => PyEncoding::UNKNOWN,
                 }),
                 cr_type: state.cr_type.map(|c| match c {
-                    notepad_parser::enums::CRType::CRLF => "CRLF".to_string(),
-                    notepad_parser::enums::CRType::CR => "CR".to_string(),
-                    notepad_parser::enums::CRType::LF => "LF".to_string(),
-                    notepad_parser::enums::CRType::UNKNOWN(x) => format!("UNKNOWN({})", x),
+                    notepad_parser::enums::CRType::CRLF => PyCRType::CRLF,
+                    notepad_parser::enums::CRType::CR => PyCRType::CR,
+                    notepad_parser::enums::CRType::LF => PyCRType::LF,
+                    notepad_parser::enums::CRType::UNKNOWN(_) => PyCRType::UNKNOWN,
                 }),
                 file_hash: state.file_hash,
                 cursor_start: state.cursor_start,
@@ -82,6 +146,8 @@ fn parse_bin(path: String) -> PyResult<PyTabState> {
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyTabState>()?;
+    m.add_class::<PyEncoding>()?;
+    m.add_class::<PyCRType>()?;
     m.add_function(wrap_pyfunction!(parse_bin, m)?)?;
     Ok(())
 }
